@@ -15,6 +15,7 @@ from PyQt5 import QtCore, QtGui
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
+
 class Ui_Form(object):
     def setupUi(self, Form):
         Form.setObjectName("Form")
@@ -165,6 +166,8 @@ class Ui_Form(object):
         self.time_left.setText(_translate("Form", "Time Left: 01:40:00"))
         self.label_3.setText(_translate("Form", "<html><head/><body><p><img src=\":/illustrations/imgs/29.png\"/></p></body></html>"))
 
+
+
 class StudentTest(Ui_Form):
     def setupUi(self, Form, stackedWidget=None):
         ''' this function gets the stacked widget and changes 
@@ -187,14 +190,17 @@ class StudentTest(Ui_Form):
         pass 
 
 
+
     def download_test(self):
         ''' This funcitn downloads the test from the server '''
         pass
 
 
+
     def upload_test(self):
         ''' This funciton uploads the finished test back to the server '''
         pass
+
 
 
 if __name__ == "__main__":

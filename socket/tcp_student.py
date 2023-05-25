@@ -1,6 +1,8 @@
 import socket
 import sys
 
+
+
 class TcpStudent:
     def __init__(self, **kwargs):
         self.PORT = kwargs['server_port']
@@ -12,8 +14,9 @@ class TcpStudent:
         # define a tcp socket 
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
-       
-    
+
+
+
     def connect(self):
         ''' This function connects to a remote socket server 
             and authenticate using the token'''
@@ -24,11 +27,9 @@ class TcpStudent:
         
         self.sock.send(auth_info.encode())
         
-        data = self.sock.recv(1024) 
-
         self.sock.close()
-
-
+        
+        
 
   
 

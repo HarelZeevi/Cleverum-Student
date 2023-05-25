@@ -19,6 +19,9 @@ from PyQt5.QtCore import *
 import keyring
 import json
 
+from enter_test import EnterTest
+
+
 
 class Ui_Form(object):
     def setupUi(self, Form):
@@ -360,9 +363,16 @@ class Login(Ui_Form):
                 "password": self.pswd.text(),
                 "id": self.id.text()      
         }
-        URL = "http://localhost:8080/api/signIn"
-        r = requests.post(url = URL, json=PARAMS)
+        URL = "https://cleverum.azurewebsites.net/api/signIn"
         
+        print(URL, "\n", PARAMS)
+
+        try: 
+            r = requests.post(url = URL, json=PARAMS)
+        except Exception as e:
+            print(e)
+
+        print(r)
         
         # Define the service name and account name to use for the JWT
         service_name = "myapp"
@@ -377,6 +387,13 @@ class Login(Ui_Form):
 
         # Store the JWT in the keyring
         keyring.set_password(service_name, account_name, jwt_value)
+        
+        # enter test page 
+        self.enter_test = QtWidgets.QWidget()
+        ui = EnterTest()
+        ui.setupUi(self.enter_test, self.stackedWidget)
+        self.stackedWidget.addWidget(self.enter_test)
+ 
 
         # switch to next page
         self.stackedWidget.setCurrentIndex(2)
@@ -385,6 +402,7 @@ class Login(Ui_Form):
     def switch_to_register(self):
         ''' this function switches to register page from login page''' 
         self.stackedWidget.setCurrentIndex(1)
+        
 
 
 if __name__ == "__main__":

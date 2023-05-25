@@ -5,7 +5,7 @@ from waiting_room_student import Ui_Form as WaitingRoomStudent
 from image_stream import ImageStream
 
 import sys
-sys.path.append('./../socket/')
+sys.path.append('./socket/')
 from tcp_student import TcpStudent
 
 import socket
@@ -36,6 +36,7 @@ class WaitingRoomStudentSock(TcpStudent, WaitingRoomStudent):
         self.cap = cv2.VideoCapture(0)
 
 
+
     def setup_camera_slot(self):
         ''' this function setups the slot of the camera stream'''
 
@@ -50,15 +51,14 @@ class WaitingRoomStudentSock(TcpStudent, WaitingRoomStudent):
    
 
 
-    def show_camera_stream(self):
+    def show_camera_stream(self, streaming):
         ''' This function shows the student's it's camera stream ''' 
-        while self.camera_streaming:
-            
+        while streaming[0]:
             ret, frame = self.cap.read()
         
             if ret:
                 self.cam.update_frame(frame)
-
+        print("stopped streaming")
 
 
 if __name__ == "__main__":
@@ -71,14 +71,15 @@ if __name__ == "__main__":
     # Connect to tcp server for authentication
     integrated_obj.connect()
     
-
-
     integrated_obj.setupUi(Form)
     integrated_obj.setup_camera_slot()
    
 
     stream_thread = threading.Thread(target=integrated_obj.show_camera_stream, daemon=True) 
+    
+    print("showing")
     Form.show()
+    
     stream_thread.start() 
     
     sys.exit(app.exec_())

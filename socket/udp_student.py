@@ -1,35 +1,45 @@
 import socket
 import threading
 import cv2
+import pyautogui
+import numpy as np
 
-class Client:
+from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
+
+
+
+class UdpStudent():
+
+
     def __init__(self, **kwargs):
+
         self.PORT = kwargs['port']
         self.HOST = kwargs['host']
         self.token = kwargs['token']
-       
+        self.fullname = kwargs['fullname']
+
+        # screenshot sending flag 
+        self.sending_screenshot = False
+        
         # define a udp server listener for a further udp communication
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         
          # streaming flag
         self.streaming = False
-
-
-        self.start()
-
-       
+        
+    
     def start(self):
+
         ''' This function fires up a udp server listener '''
 
         # bind the server 
         self.sock.bind((self.HOST, self.PORT))
         print(f'[UDP Server at {self.HOST}:{self.PORT} is Active]...')
 
-
-        # listener that recieves commands from server
-        command, _  = self.sock.recvfrom(1024)
-        print("command: ", command)
+        
+        # authenticate the student
+        self.auth()
 
         # starting video streaming
         stream_thread = threading.Thread(target=self.start_video_stream, daemon=True)
@@ -39,7 +49,7 @@ class Client:
             # listener that recieves commands from server
             command, _  = self.sock.recvfrom(1024)
             print("command: ", command)
-
+            
             self.route(command.decode())
   
          
@@ -49,17 +59,28 @@ class Client:
             and send send the route it to the different methods'''
         
         if command == 'GET_SCREENSHOT':
-            self.send_screenshot()
-        
+            self.sending_screenshot = True 
 
     
     def send_screenshot(self):
         ''' This function sends  a screenshot to the server'''
-        pass
+
+        # Get the screen resolution
+        screen_width, screen_height = pyautogui.size()
+
+        # Capture the screenshot using PyAutoGUI
+        screenshot = pyautogui.screenshot()
+
+        # Convert the screenshot to a NumPy array
+        screenshot_np = np.array(screenshot)
+
+        # Convert the color space from RGB to BGR
+        screenshot_np = cv2.cvtColor(screenshot_np, cv2.COLOR_RGB2BGR)
+
+        return screenshot_np
 
 
-
-    def start_video_stream(self, camera_index=0):
+    def start_video_stream(self):
         ''' This fucntion starts transmitting  a camera video stream to
             the server'''
         
@@ -67,7 +88,7 @@ class Client:
         CHUNK_SIZE = 65506
 
         # Initialize the camera
-        cap = cv2.VideoCapture(camera_index)
+        cap = cv2.VideoCapture(0)
         
         # Check if the camera is working
         if not cap.isOpened():
@@ -80,14 +101,17 @@ class Client:
         # used to record the time at which we processed current frame
         new_frame_time = 0
         
-        self.streaming = True
-
         # Loop to read frames from the camera and send them to the UDP socket
-        while self.streaming:
+        while True:
 
-            # Capture a frame from the camera
-            ret, frame = cap.read()
-
+            if self.sending_screenshot:
+                print("Taking snapshot")
+                frame = self.send_screenshot()
+            
+            else: 
+                # Capture a frame from the camera
+                ret, frame = cap.read()
+                
             # Convert the frame to a byte array
             data = cv2.imencode('.jpg', frame)[1].tobytes()
 
@@ -96,16 +120,32 @@ class Client:
            
             # sending number of chunks 
             self.sock.sendto(str(num_chunks).encode(), (self.HOST, 8080))               
-            
+           
 
             for i in range(num_chunks):
-                print(len(data))
                 end = min((i + 1) * CHUNK_SIZE + 1, len(data))
-                print(end)
+
+                # adding textual alert for screenshot
+                if self.sending_screenshot:
+                    print("sending Screenshot")
+                   
+                    frame = self.send_screenshot()
+                    
+                    # Convert the frame to a byte array
+                    data = cv2.imencode('.jpg', frame)[1].tobytes()
+                
+                    data = b"screen" + data
+                    
+                    self.sending_screenshot = False
+
+                else:
+                    data = b"camera" + data
+ 
                 chunk = data[i * CHUNK_SIZE: end]
+
                 self.sock.sendto(chunk, (self.HOST, 8080))               
             
-       
+        
         # Release the camera and close the UDP socket
         cap.release()
         
@@ -121,4 +161,4 @@ class Client:
 
 
 if __name__ == '__main__':
-    client = Client(port=8081, host='localhost', token='ABC123')
+    client = UdpStudent(port=8081, host='localhost', token='ABC123', fullname='Harel Zeevi')

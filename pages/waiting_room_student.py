@@ -15,6 +15,8 @@ from PyQt5.QtCore import *
 import sys
 
 
+from student_test_sock import StudentTestSock
+
 
 class Ui_Form(object):
     def setupUi(self, Form):
