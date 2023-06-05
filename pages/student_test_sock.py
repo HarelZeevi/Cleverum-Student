@@ -21,11 +21,11 @@ class StudentTestSock(UdpStudent, StudentTest):
         trasmitting video stream from the pc's camera and screenshots at the teacher's request'''
 
 
-    def __init__(self, **kwargs):
+    def __init__(self, accessToken, filename, **kwargs):
         
         # init pyqt gui
-        StudentTest.__init__(self)
-        
+        StudentTest.__init__(self, accessToken, filename)
+
         # init udp socket 
         UdpStudent.__init__(self, **kwargs)
         

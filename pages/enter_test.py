@@ -11,6 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 import threading
 import resources
+import json 
 
 from waiting_room_student_sock import WaitingRoomStudentSock 
 from student_test_sock import StudentTestSock
@@ -136,7 +137,8 @@ class EnterTest(Ui_Form):
     
     def __init__(self):
         self.fullname = 'Harel Zeevi'
-        
+        self.access_token = ''
+        self.filename = ''
 
 
     def setupUi(self, Form, stackedWidget=None):
@@ -160,6 +162,31 @@ class EnterTest(Ui_Form):
         # after connection finished call start_test page
         self.switch_page = True
 
+        
+
+    def getTestData(self):
+
+        # define the service name and account name to use for the jwt
+        service_name = "myapp"
+        account_name = "jwt"
+
+        # retrieve the jwt from the keyring
+        jwt_value = keyring.get_password(service_name, account_name)
+        
+        # add the jwt_value to the headers
+        headers = {"authorization": f"bearer {jwt_value}"}
+            
+        url = "http://localhost:3000/api/student/enterTest"
+        r = requests.get(url, headers=headers)
+        
+        print(r.text)
+        
+        # extract ip, filename
+        ip = json.loads(r.text)[0]["serverIp"]
+        filename = json.loads(r.text)[0]["filename"]
+
+        return (ip, filename)
+
 
 
     def switch_page(self):
@@ -167,29 +194,19 @@ class EnterTest(Ui_Form):
         
         # init test object and start its udp listener
         self.test_page = QtWidgets.QWidget()
+        
+        self.access_token = token.getText()
 
-        test_obj = StudentTestSock(port=8081, host='localhost', token='ABC123', fullname="Harel Zeevi")
+        ip, self.filename = self.getTestData()
+
+        test_obj = StudentTestSock(self.access_token, self.filename, port=8081, host=ip, token='ABC123', fullname="Harel Zeevi")
         listener_thread = threading.Thread(target=test_obj.auth)
         listener_thread.start() 
         
-
-        ''' 
-        # setup ui for camera & waiting room
-        integrated_obj.setupUi(self.waiting_room)
-        integrated_obj.setup_camera_slot()
-        self.stackedWidget.addWidget(self.waiting_room)
-        '''     
-        # setup ui for test page
         test_obj.setupUi(self.test_page)
         self.stackedWidget.addWidget(self.test_page)
         
         self.stackedWidget.setCurrentIndex(3)
-
-        # camera streaming thread
-        #self.streaming = [True]
-        #stream_thread = threading.Thread(target=integrated_obj.show_camera_stream, daemon=True, args=(self.streaming,)) 
-        #stream_thread.start() 
-        
 
        
     def start_test(self):  
